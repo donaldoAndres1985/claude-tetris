@@ -159,6 +159,55 @@ kbd {
   color: var(--kbd-text);
 }
 
+/* ---- High scores ---- */
+.highscores ol {
+  list-style: decimal;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--control-text);
+}
+
+.highscores ol li {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.highscores ol li.highlight {
+  color: var(--value-color);
+  font-weight: 700;
+}
+
+.highscore-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--control-text);
+}
+
+#reset-scores-btn {
+  margin-top: 4px;
+  background: transparent;
+  color: var(--control-text);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: background 0.15s, color 0.15s;
+}
+
+#reset-scores-btn:hover {
+  background: var(--kbd-bg);
+  color: var(--text);
+}
+
 /* ---- Toggle de tema ---- */
 .theme-toggle {
   position: relative;
@@ -237,7 +286,34 @@ kbd {
   color: var(--overlay-score);
 }
 
-#restart-btn {
+#overlay-combo {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  color: var(--overlay-score);
+}
+
+#highscore-entry {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#highscore-entry.hidden {
+  display: none;
+}
+
+#player-name-input {
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  width: 120px;
+}
+
+#restart-btn,
+#save-score-btn {
   margin-top: 8px;
   background: var(--btn-bg);
   color: var(--btn-text);
@@ -251,6 +327,7 @@ kbd {
   transition: background 0.15s;
 }
 
-#restart-btn:hover {
+#restart-btn:hover,
+#save-score-btn:hover {
   background: var(--btn-hover);
 }
