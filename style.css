@@ -200,6 +200,25 @@ kbd {
   transform: translateX(20px);
 }
 
+/* ---- Selector de skin ---- */
+.skin-select {
+  background: var(--kbd-bg);
+  color: var(--kbd-text);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ---- Skin: Neon ---- */
+/* Force a black board background for the neon skin so glow effects read
+   correctly, without fighting the independent light/dark theme toggle. */
+body.skin-neon #board {
+  background: #000;
+}
+
 /* ---- Overlay ---- */
 .overlay {
   position: absolute;

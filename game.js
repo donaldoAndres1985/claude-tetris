@@ -15,6 +15,48 @@ const COLORS = [
   '#ffb74d', // L - orange
 ];
 
+const SKINS = {
+  retro: {
+    colors: COLORS,
+  },
+  neon: {
+    colors: [
+      null,
+      '#00fff0', // I - electric cyan
+      '#faff00', // O - electric yellow
+      '#e000ff', // T - electric purple/magenta
+      '#00ff6a', // S - electric green
+      '#ff1744', // Z - electric red
+      '#2979ff', // J - electric blue
+      '#ff9100', // L - electric orange
+    ],
+  },
+  pastel: {
+    colors: [
+      null,
+      '#b3e5fc', // I - pastel cyan
+      '#fff9c4', // O - pastel yellow
+      '#e1bee7', // T - pastel purple
+      '#c8e6c9', // S - pastel green
+      '#ffcdd2', // Z - pastel red
+      '#bbdefb', // J - pastel blue
+      '#ffe0b2', // L - pastel orange
+    ],
+  },
+  pixel: {
+    colors: [
+      null,
+      '#4dd0e1', // I - cyan
+      '#ffd54f', // O - yellow
+      '#ba68c8', // T - purple
+      '#81c784', // S - green
+      '#e57373', // Z - red
+      '#90caf9', // J - pale blue
+      '#ffb74d', // L - orange
+    ],
+  },
+};
+
 const PIECES = [
   null,
   [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], // I
@@ -40,9 +82,14 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 const themeSwitch = document.getElementById('theme-switch');
+const skinSelect = document.getElementById('skin-select');
 
 const THEME_KEY = 'tetris-theme';
 const themeColors = { grid: '#22222e', highlight: 'rgba(255,255,255,0.12)' };
+
+const SKIN_KEY = 'tetris-skin';
+let currentSkin = 'retro';
+let activeColors = SKINS.retro.colors;
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
@@ -68,6 +115,22 @@ themeSwitch.addEventListener('change', () => {
   applyTheme(theme);
   localStorage.setItem(THEME_KEY, theme);
 });
+
+function applySkin(skin) {
+  if (!SKINS[skin]) skin = 'retro';
+  currentSkin = skin;
+  activeColors = SKINS[skin].colors;
+  skinSelect.value = skin;
+  document.body.classList.toggle('skin-neon', skin === 'neon');
+  localStorage.setItem(SKIN_KEY, skin);
+}
+
+function initSkin() {
+  const saved = localStorage.getItem(SKIN_KEY);
+  applySkin(SKINS[saved] ? saved : 'retro');
+}
+
+skinSelect.addEventListener('change', () => applySkin(skinSelect.value));
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -183,15 +246,73 @@ function updateHUD() {
   levelEl.textContent = level;
 }
 
+// Canvas's native context.roundRect isn't available in every environment,
+// so draw a rounded rect manually via arcTo.
+function fillRoundedRect(ctx, x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.arcTo(x + w, y, x + w, y + radius, radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.arcTo(x + w, y + h, x + w - radius, y + h, radius);
+  ctx.lineTo(x + radius, y + h);
+  ctx.arcTo(x, y + h, x, y + h - radius, radius);
+  ctx.lineTo(x, y + radius);
+  ctx.arcTo(x, y, x + radius, y, radius);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// Deterministic small checker pattern overlaid on top of the flat fill to
+// simulate a pixel-art texture (fixed offsets, no randomness -> no flicker).
+function drawPixelTexture(context, bx, by, size) {
+  const inner = size - 2;
+  const half = inner / 2;
+  context.fillStyle = 'rgba(255, 255, 255, 0.18)';
+  context.fillRect(bx, by, half, half);
+  context.fillStyle = 'rgba(0, 0, 0, 0.18)';
+  context.fillRect(bx + half, by + half, inner - half, inner - half);
+}
+
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
+  const color = activeColors[colorIndex];
+  const bx = x * size + 1;
+  const by = y * size + 1;
+  const bw = size - 2;
   context.globalAlpha = alpha ?? 1;
-  context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  // highlight
-  context.fillStyle = themeColors.highlight;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+
+  switch (currentSkin) {
+    case 'neon':
+      context.shadowColor = color;
+      context.shadowBlur = 12;
+      context.fillStyle = color;
+      context.fillRect(bx, by, bw, bw);
+      context.shadowBlur = 0;
+      break;
+
+    case 'pastel':
+      context.fillStyle = color;
+      fillRoundedRect(context, bx, by, bw, bw, size * 0.25);
+      break;
+
+    case 'pixel':
+      context.fillStyle = color;
+      context.fillRect(bx, by, bw, bw);
+      drawPixelTexture(context, bx, by, size);
+      break;
+
+    case 'retro':
+    default:
+      context.fillStyle = color;
+      context.fillRect(bx, by, bw, bw);
+      // highlight
+      context.fillStyle = themeColors.highlight;
+      context.fillRect(bx, by, bw, 4);
+      break;
+  }
+
   context.globalAlpha = 1;
 }
 
@@ -285,6 +406,7 @@ function loop(ts) {
 
 function init() {
   initTheme();
+  initSkin();
   board = createBoard();
   score = 0;
   lines = 0;
